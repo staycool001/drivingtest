@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driving Test Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .quiz-container {
+            max-width: 600px;
+            margin: auto;
+            text-align: center;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        h4{
+            margin-top: 0;
+        }
+        h2{
+            margin-bottom: 2px;
+        }
+        button{
+            font-weight: bold;
+        }
+        #quizType{
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>運転免許学科試験</h2>
+        <h4>Driving License Exam</h4>
+        <div id="quizSelection">
+            <button onclick="startQuiz('temporary')">仮免問題</button>
+            <button onclick="startQuiz('real')">本免問題</button>
+            <button onclick="startQuiz('danger')">危険予測問題</button>
+        </div>
+        <div id="quizContent" class="hidden">
+            <p id="quizType"></p>
+            <div id="imageContainer" class="hidden">
+                <img id="quizImage" src="" alt="Quiz Image">
+                <p id="imageDetails" class="hidden"></p>
+            </div>
+            
+            <p id="question"></p>
+            
+            <div id="answerButtons">
+                <button id="trueBtn" onclick="checkAnswer(true)">正</button>
+                <button id="falseBtn" onclick="checkAnswer(false)">誤</button>
+            </div>
+            <p id="explanation" class="hidden"></p>
+            <button id="nextBtn" class="hidden" onclick="nextQuestion()">Next</button>
+            <p id="score"></p>
+            <p id="remaining"></p>
+            <button onclick="switchQuiz()">Switch Quiz Type</button>
+        </div>
+    </div>
+
+    <script>
+        const temporaryQuizzes = [
+            { 
+                question: "一方通行になっている道路でも、車は道路の中央から右の部分にはみ出して通行することはできない。", 
+                answer: false, 
+                explanation: "一方通行であれば右側を通行してもよい。\nFalse：Even on a one-way street, cars cannot protrude and travel from the center of the road towards the right side." 
+            },
+            { 
+                question: "この標識は、横断歩道か自転車横断帯のいずれかがあることを示している。", 
+                answer: false, 
+                explanation: "標識は、横断歩道と自転車横断帯であることを示している。\nFalse：This sign indicates the presence of either a pedestrian crossing or a bicycle crossing zone.", 
+                image: "icons/pedsandbicy.png" 
+            }
+        ];
+
+        const realQuizzes = [
+            { 
+                question: "「初心運転者標識」は普通免許を受けて間もない者のうち、運転に自信のない者がつけるもので、運転に自信のある者はつけなくてもよい。", 
+                answer: false, 
+                explanation: "一年以内は自信のあるなしにかかわらず、つけなければならない。\nFalse：The “Novice Driver” sign is for those who have recently obtained a regular driver's license and lack confidence in their driving abilities. Those who are confident in their driving skills are not required to display this sign.", 
+            },
+            { 
+                question: "長い下り坂を走行するときは、四輪車はフットブレーキ、二輪車は前・後輪ブレーキを主として使い、エンジンブレーキは補助的に使うのがよい。", 
+                answer: false, 
+                explanation: "エンジンブレーキを主に使い、フットブレーキなどは補助的に使う。\nFalse：When driving down a long downhill slope, it is best to primarily use the foot brake for four-wheeled vehicles, the front and rear brakes for two-wheeled vehicles, and use the engine brake as an auxiliary aid.", 
+            }
+        ];
+
+        const dangerQuizzes = [
+            { 
+                question: "⓵通園バスはまだ発進しないと思うので、対向車線にはみ出してこのまま通過する。", 
+                answer: false, 
+                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I don't think the nursery school bus has departure yet, so I'll continue driving through by slightly crossing into the opposite lane.", 
+                image: "images/kiken1mon1.png", 
+                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
+            },
+            { 
+                question: "⓶大人が一緒にいれば、子供が飛び出すことはないと思うので、このままの速度で通過する。", 
+                answer: false, 
+                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I think as long as there is an adult accompanying them, the children won't rush out, so I'll continue passing at this speed.", 
+                image: "images/kiken1mon1.png", 
+                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
+            },
+            { 
+                question: "⓷通園バスの前を子供が横断するかもしれないので、警音器を鳴らして通過する。", 
+                answer: false, 
+                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I'll sound the horn as I pass, because a child might cross in front of the nursery school bus.", 
+                image: "images/kiken1mon1.png", 
+                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
+            }
+        ];
+
+        let currentQuiz;
+        let quizType;
+        let currentQuizSet;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let remainingCount = 0;
+
+        function startQuiz(type) {
+            quizType = type;
+            document.getElementById('quizSelection').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+            if (type === 'temporary') {
+                document.getElementById('quizType').innerText = '仮免問題';
+                currentQuizSet = [...temporaryQuizzes];
+            } else if (type === 'real') {
+                document.getElementById('quizType').innerText = '本免問題';
+                currentQuizSet = [...realQuizzes];
+            } else {
+                document.getElementById('quizType').innerText = '危険予測問題';
+                currentQuizSet = [...dangerQuizzes];
+            }
+            correctCount = 0;
+            wrongCount = 0;
+            remainingCount = currentQuizSet.length;
+            updateScore();
+            nextQuestion();
+        }
+
+        function switchQuiz() {
+            startQuiz(quizType === 'temporary' ? 'real' : (quizType === 'real' ? 'danger' : 'temporary'));
+            document.getElementById('answerButtons').classList.remove('hidden');
+        }
+
+        function getRandomQuiz() {
+            const randomIndex = Math.floor(Math.random() * currentQuizSet.length);
+            const quiz = currentQuizSet.splice(randomIndex, 1)[0];
+            remainingCount--;
+            updateScore();
+            return quiz;
+        }
+
+        function displayQuiz() {
+            if (remainingCount === 0) {
+                document.getElementById('question').innerText = "You've completed all quizzes!";
+                document.getElementById('imageContainer').classList.add('hidden');
+                document.getElementById('answerButtons').classList.add('hidden');
+                document.getElementById('nextBtn').classList.add('hidden');
+                document.getElementById('explanation').classList.add('hidden');
+                return;
+            }
+            currentQuiz = getRandomQuiz();
+            document.getElementById('question').innerText = currentQuiz.question;
+
+            if (currentQuiz.image) {
+                document.getElementById('quizImage').src = currentQuiz.image;
+                document.getElementById('imageContainer').classList.remove('hidden');
+                if (currentQuiz.details) {
+                    document.getElementById('imageDetails').innerText = currentQuiz.details;
+                    document.getElementById('imageDetails').classList.remove('hidden');
+                } else {
+                    document.getElementById('imageDetails').classList.add('hidden');
+                }
+            } else {
+                document.getElementById('imageContainer').classList.add('hidden');
+            }
+
+            document.getElementById('explanation').classList.add('hidden');
+            document.getElementById('nextBtn').classList.add('hidden');
+            document.getElementById('trueBtn').disabled = false;
+            document.getElementById('falseBtn').disabled = false;
+        }
+
+        function checkAnswer(selectedAnswer) {
+            const explanation = document.getElementById('explanation');
+            if (selectedAnswer === currentQuiz.answer) {
+                explanation.innerText = "正解！\n解説： " + currentQuiz.explanation;
+                correctCount++;
+            } else {
+                explanation.innerText = "不正解！\n解説： " + currentQuiz.explanation;
+                wrongCount++;
+            }
+            explanation.classList.remove('hidden');
+            document.getElementById('nextBtn').classList.remove('hidden');
+            document.getElementById('trueBtn').disabled = true;
+            document.getElementById('falseBtn').disabled = true;
+            updateScore();
+        }
+
+        function nextQuestion() {
+            displayQuiz();
+        }
+
+        function updateScore() {
+            document.getElementById('score').innerText = `Correct: ${correctCount} | Wrong: ${wrongCount}`;
+            document.getElementById('remaining').innerText = `Remaining Quizzes: ${remainingCount}`;
+        }
+
+        window.onload = function() {
+            document.getElementById('quizSelection').classList.remove('hidden');
+            document.getElementById('quizContent').classList.add('hidden');
+        };
+    </script>
+</body>
+</html>
