@@ -3,50 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.css" rel="stylesheet">
     <title>Driving Test Quiz</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .quiz-container {
-            max-width: 600px;
-            margin: auto;
-            text-align: center;
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .hidden {
-            display: none;
-        }
-        .result {
-            font-weight: bold;
-            margin-top: 20px;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        h4{
-            margin-top: 0;
-        }
-        h2{
-            margin-bottom: 2px;
-        }
-        button{
-            font-weight: bold;
-        }
-        #quizType{
-            font-weight: bold;
-        }
-        #question{
-            border: 1px solid #ccc;
+        img{
+            width: 80px;
         }
     </style>
 </head>
@@ -57,7 +18,7 @@
         <div id="quizSelection">
             <button onclick="startQuiz('temporary')">仮免問題</button>
             <button onclick="startQuiz('real')">本免問題</button>
-            <button onclick="startQuiz('danger')">危険予測問題</button>
+            <button onclick="window.location.href = 'kikenmon.html'">危険予測問題</button>
         </div>
         <div id="quizContent" class="hidden">
             <p id="quizType"></p>
@@ -108,30 +69,6 @@
             }
         ];
 
-        const dangerQuizzes = [
-            { 
-                question: "⓵通園バスはまだ発進しないと思うので、対向車線にはみ出してこのまま通過する。", 
-                answer: false, 
-                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I don't think the nursery school bus has departure yet, so I'll continue driving through by slightly crossing into the opposite lane.", 
-                image: "images/kiken1mon1.png", 
-                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
-            },
-            { 
-                question: "⓶大人が一緒にいれば、子供が飛び出すことはないと思うので、このままの速度で通過する。", 
-                answer: false, 
-                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I think as long as there is an adult accompanying them, the children won't rush out, so I'll continue passing at this speed.", 
-                image: "images/kiken1mon1.png", 
-                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
-            },
-            { 
-                question: "⓷通園バスの前を子供が横断するかもしれないので、警音器を鳴らして通過する。", 
-                answer: false, 
-                explanation: "子供の飛び出しに備えて、徐行しながら通過する。\nFalse：I'll sound the horn as I pass, because a child might cross in front of the nursery school bus.", 
-                image: "images/kiken1mon1.png", 
-                details: "４０km/hで進行しています。どのようなことに注意して運転しますか。" 
-            }
-        ];
-
         let currentQuiz;
         let quizType;
         let currentQuizSet;
@@ -150,8 +87,8 @@
                 document.getElementById('quizType').innerText = '本免問題';
                 currentQuizSet = [...realQuizzes];
             } else {
-                document.getElementById('quizType').innerText = '危険予測問題';
-                currentQuizSet = [...dangerQuizzes];
+                window.location.href = 'kikenmon.html'; // Replace with your actual path
+                return; // Exit function to prevent further execution
             }
             correctCount = 0;
             wrongCount = 0;
