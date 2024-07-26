@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="styles.css" rel="stylesheet">
+    <title>Picture Quiz</title>
+</head>
+<body>
+    <div class="quiz-container">
+        <h2>運転免許学科試験</h2>
+        <h4>Driving License Exam</h4>
+        <p id="quizType">危険予測問題</p>
+        <div id="problem-container"></div>
+        <button id="next-button" onclick="nextProblem()" class="hidden">Next</button>
+        <div id="explanation" class="hidden">
+            <p id="answer-result"></p>
+            <p>Explanation:</p>
+            <p id="explanation-text"></p>
+            <p>Translation:</p>
+            <p id="translation-text"></p>
+            
+        </div>
+        <div class="stats">   
+            <p>Correct Answers: <span id="correct"></span> | Wrong Answers: <span id="wrong"></span></p>
+            <p>Remaining Problems: <span id="remaining"></span></p>
+        </div>
+    </div>
+
+    <script>
+        const problems = [
+            {
+                image: 'images/kiken1mon1.png',
+                text: '４０km/hで進行しています。どのようなことに注意して運転しますか。',
+                explanation: "子供の飛び出しに備えて、徐行しながら通過する。",
+                questions: [
+                    { question: '⓵通園バスはまだ発進しないと思うので、対向車線にはみ出してこのまま通過する。', answer: false, translation: 'False：I dont think the nursery school bus has departure yet, so I`ll continue driving through by slightly crossing into the opposite lane.' },
+                    { question: '⓶大人が一緒にいれば、子供が飛び出すことはないと思うので、このままの速度で通過する。', answer: false, translation: 'False：I think as long as there is an adult accompanying them, the children won`t rush out, so I`ll continue passing at this speed.' },
+                    { question: '⓷通園バスの前を子供が横断するかもしれないので、警音器を鳴らして通過する。', answer: false, translation: 'False：I`ll sound the horn as I pass, because a child might cross in front of the nursery school bus.' }
+                ]
+            },
+            {
+                image: 'images/kiken1mon1.png',
+                text: 'What is this image?',
+                explanation: "This is a car.",
+                questions: [
+                    { question: 'Is this a car?', answer: true, translation: 'これは車ですか？' },
+                    { question: 'Is this a bike?', answer: false, translation: 'これは自転車ですか？' },
+                    { question: 'Is this a truck?', answer: false, translation: 'これはトラックですか？' }
+                ]
+            },
+            {
+                image: 'images/kiken1mon1.png',
+                text: 'What is this image?',
+                explanation: "This is a tree.",
+                questions: [
+                    { question: 'Is this a tree?', answer: true, translation: 'これは木ですか？' },
+                    { question: 'Is this a bush?', answer: false, translation: 'これは茂みですか？' },
+                    { question: 'Is this a flower?', answer: false, translation: 'これは花ですか？' }
+                ]
+            }
+        ];
+
+        let currentProblemIndex = 0;
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let wrongAnswers = 0;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadProblem() {
+            if (currentProblemIndex >= problems.length) {
+                document.getElementById('problem-container').innerHTML = `
+                    <p>Quiz Completed!</p>
+                    <button onclick="goToAnotherPage()">Go to Home Page</button>
+                `;
+                document.getElementById('next-button').classList.add('hidden');
+                return;
+            }
+
+            currentQuestionIndex = 0;
+            const problem = problems[currentProblemIndex];
+            document.getElementById('problem-container').innerHTML = `
+                <div class="question">
+                    <img src="${problem.image}" alt="Problem Image" width="100%">
+                    <p>${problem.text}</p>
+                    <div id="questions-container"></div>
+                </div>
+            `;
+
+            loadQuestion();
+            updateStats();
+        }
+
+        function loadQuestion() {
+            const problem = problems[currentProblemIndex];
+            const question = problem.questions[currentQuestionIndex];
+            document.getElementById('questions-container').innerHTML = `
+                <p>${question.question}</p>
+                <button id="trueButton" onclick="answer(true)">True</button>
+                <button id="falseButton" onclick="answer(false)">False</button>
+            `;
+        }
+
+        function answer(userAnswer) {
+            const problem = problems[currentProblemIndex];
+            const question = problem.questions[currentQuestionIndex];
+            const resultText = userAnswer === question.answer ? 'Correct!' : 'Wrong!';
+
+            if (userAnswer === question.answer) {
+                correctAnswers++;
+            } else {
+                wrongAnswers++;
+            }
+
+            document.getElementById('trueButton').disabled = true;
+            document.getElementById('falseButton').disabled = true;
+
+            document.getElementById('explanation').classList.remove('hidden');
+            document.getElementById('explanation-text').textContent = problem.explanation;
+            document.getElementById('translation-text').textContent = question.translation;
+            document.getElementById('answer-result').textContent = resultText;
+
+            currentQuestionIndex++;
+            if (currentQuestionIndex < problem.questions.length) {
+                loadQuestion();
+            } else {
+                document.getElementById('next-button').classList.remove('hidden');
+            }
+
+            updateStats();
+        }
+
+        function nextProblem() {
+            currentProblemIndex++;
+            document.getElementById('next-button').classList.add('hidden');
+            document.getElementById('explanation').classList.add('hidden');
+            loadProblem();
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-container').innerHTML = `
+                <p>Quiz Completed!</p>
+                <button onclick="goToAnotherPage()">Go to Another Page</button>
+            `;
+        }
+
+        function goToAnotherPage() {
+            window.location.href = 'drivingtest.html'; // Replace with the path to your other HTML page
+        }
+
+        function updateStats() {
+            document.getElementById('remaining').innerText = problems.length - currentProblemIndex - 1;
+            document.getElementById('correct').innerText = correctAnswers;
+            document.getElementById('wrong').innerText = wrongAnswers;
+        }
+
+        shuffle(problems);
+        loadProblem();
+    </script>
+</body>
+</html>
